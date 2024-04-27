@@ -1,13 +1,12 @@
-import { ChartType } from "./interfaces/ChartType.enum";
+import { ChartType } from "./interfaces/ChartType.enum.js";
 
 export const settings = {
   retries: 3,
   retryAfterHowManySeconds: 5,
-  topRankedCount: 3,
+  topRankedCount: 5,
   daysToGetChartFrom: 30,
   chartContentType: ChartType.Both, // Artists, Tracks or Both
-  postOnTwitter: false,
   postOnMastodon: false,
-  postOnMisskey: false,
+  postOnMisskey: true,
   postOnPleroma: false
 }

@@ -1,27 +1,25 @@
 import axios from "axios";
 
-import twitter from 'twitter-lite';
+import { lastFmKeys } from "./utils/auth/lastfm-auth-data.js"
 
-import { lastFmKeys } from "./utils/auth/lastfm-auth-data"
-import { twitterKeys, twitterUserData } from "./utils/auth/twitter-auth-data";
-import { mastodonAuthData } from "./utils/auth/mastodon-auth-data";
-import { misskeyAuthData } from "./utils/auth/misskey-auth-data";
-import { pleromaAuthData } from "./utils/auth/pleroma-auth-data";
+import { mastodonAuthData } from "./utils/auth/mastodon-auth-data.js";
+import { misskeyAuthData } from "./utils/auth/misskey-auth-data.js";
+import { pleromaAuthData } from "./utils/auth/pleroma-auth-data.js";
 
-import { LastFMArtistChart } from "./utils/interfaces/ILastFmArtistChart";
-import { Artist } from "./utils/interfaces/IArtist";
-import { LastFMTrackChart } from "./utils/interfaces/ILastFmTrackChart";
-import { Track } from "./utils/interfaces/ITrack";
+import { LastFMArtistChart } from "./utils/interfaces/ILastFmArtistChart.js";
+import { Artist } from "./utils/interfaces/IArtist.js";
+import { LastFMTrackChart } from "./utils/interfaces/ILastFmTrackChart.js";
+import { Track } from "./utils/interfaces/ITrack.js";
 
-import { generateUnixTimestamp, parseLastFmResponse, parseDayString } from "./utils/helpers";
-import { settings } from "./utils/settings";
-import { ChartType } from "./utils/interfaces/ChartType.enum";
+import { generateUnixTimestamp, parseLastFmResponse, parseDayString } from "./utils/helpers.js";
+import { settings } from "./utils/settings.js";
+import { ChartType } from "./utils/interfaces/ChartType.enum.js";
 
-const twitterClient = new twitter(twitterKeys);
 import generator, { Entity, Response } from 'megalodon';
+import { api as misskeyApi } from 'misskey-js';
 
 let lastFmErrorCount = 0;
-let twitterErrorCount = 0;
+
 let mastodonErrorCount = 0;
 let misskeyErrorCount = 0;
 let pleromaErrorCount = 0;
@@ -115,10 +113,6 @@ const preparePost = async (lastFmData: Object, chartType: ChartType): Promise<vo
       generatedContent += ') #socialfm';
     }
   }
-  
-  if (settings.postOnTwitter) {
-    await postToTwitter(generatedContent);
-  }
 
   if (settings.postOnMastodon) {
     await postToMastodon(generatedContent);
@@ -132,33 +126,10 @@ const preparePost = async (lastFmData: Object, chartType: ChartType): Promise<vo
     await postToPleroma(generatedContent);
   }
 
-  if (!settings.postOnTwitter && !settings.postOnMastodon && !settings.postOnMastodon && !settings.postOnPleroma) {
+  if (!settings.postOnMastodon && !settings.postOnMisskey && !settings.postOnPleroma) {
     console.error('No social network is enabled to post on!');
     process.exit();
   }
-}
-
-const postToTwitter = async (tweetContent: string): Promise<void> => {
-  if (tweetContent.length > 280) {
-    console.error(`\nTwitter: Tweet exceeds maximum allowed length of 180 characters. Not tweetin' this one.`);
-    return
-  }
-
-  await twitterClient.post('statuses/update', { status: tweetContent }).then(response => {
-    console.log('\nPosted to Twitter: ', `https://twitter.com/${twitterUserData.username}/status/${response.id_str}`);
-    twitterErrorCount = 0;
-  }).catch(error => {
-    console.error('\nError when posting to Twitter:', error.errors[0].message);
-    twitterErrorCount++;
-
-    // Retry.
-    if (twitterErrorCount < settings.retries) {
-      console.log(`\nRetrying in ${settings.retryAfterHowManySeconds} seconds...`);
-      setTimeout(() => {
-        postToTwitter(tweetContent);
-      }, settings.retryAfterHowManySeconds * 1000);
-    }
-  });
 }
 
 const postToMastodon = async (postContent: string): Promise<void> => {
@@ -181,9 +152,13 @@ const postToMastodon = async (postContent: string): Promise<void> => {
 }
 
 const postToMisskey = async (postContent: string): Promise<void> => {
-  const client = generator('misskey', misskeyAuthData.base_url, misskeyAuthData.access_token);
-  client.postStatus(postContent).then((res: any) => {
-    console.log('\nPosted to Misskey: ', `${misskeyAuthData.base_url}/notes/${res.data.id}`);
+  const cli = new misskeyApi.APIClient({
+    origin: misskeyAuthData.base_url,
+    credential: misskeyAuthData.access_token,
+  });
+  
+  cli.request('notes/create', { text: postContent, visibility: 'public' }).then((res: any) => {
+    console.log('\nPosted to Misskey: ', `${misskeyAuthData.base_url}/notes/${res.createdNote.id}`);
     misskeyErrorCount = 0;
   }).catch((error: any) => {
     console.error('\nError when posting to Misskey: ', error);
@@ -196,7 +171,7 @@ const postToMisskey = async (postContent: string): Promise<void> => {
         postToMisskey(postContent);
       }, settings.retryAfterHowManySeconds * 1000);
     }
-  })
+  });
 }
 
 const postToPleroma = async (postContent: string): Promise<void> => {
@@ -215,7 +190,7 @@ const postToPleroma = async (postContent: string): Promise<void> => {
         postToPleroma(postContent);
       }, settings.retryAfterHowManySeconds * 1000);
     }
-  })
+  });
 }
 
 ((): void => {

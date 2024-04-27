@@ -1,12 +1,13 @@
 {
   "name": "socialfm",
-  "version": "1.0.0",
-  "description": "A simple Last.fm most listened to short post tool.",
+  "version": "1.1.0",
+  "description": "A simple Last.fm tool to post your most listened to the fediverse.",
   "repository": {
     "type": "git",
     "url": "git://github.com/pedrocx486/socialfm.git"
   },
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "npm run build && node ./build/index.js",
     "build": "npx tsc --project ./"
@@ -16,7 +17,6 @@
     "lastfm",
     "most listened",
     "mastodon",
-    "twitter",
     "last fm",
     "pleroma",
     "misskey"
@@ -24,15 +24,15 @@
   "author": "pedrocx486",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.3.4",
-    "luxon": "^3.3.0",
-    "megalodon": "~5.3.0",
-    "twitter-lite": "^1.1.0"
+    "axios": "^1.6.8",
+    "luxon": "^3.4.4",
+    "megalodon": "~10.0.0",
+    "misskey-js": "^2024.3.1"
   },
   "devDependencies": {
-    "@types/luxon": "^3.2.0",
-    "@types/node": "^18.14.6",
-    "ts-node": "^10.9.1",
-    "typescript": "^4.9.5"
+    "@types/luxon": "^3.4.2",
+    "@types/node": "^20.12.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
   }
 }
