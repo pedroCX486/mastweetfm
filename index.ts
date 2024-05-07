@@ -35,8 +35,13 @@ const getLastFMTrackChart = (): void => {
       format: 'json'
     }
   }).then(response => {
-    preparePost(parseLastFmResponse(response.data), ChartType.Tracks);
-    lastFmErrorCount = 0;
+    if (response.data.weeklytrackchart.track.lenght) {
+      preparePost(parseLastFmResponse(response.data), ChartType.Tracks);
+      lastFmErrorCount = 0;
+    } else {
+      console.log('No tracks to post... You need to listen to more music. Or at least scrobble it.');
+      return;
+    }
   }).catch(error => {
     console.error('\nError when fetching data from Last.FM:', error);
     lastFmErrorCount++;
@@ -64,8 +69,13 @@ const getLastFMArtistChart = (): void => {
       format: 'json'
     }
   }).then(response => {
-    preparePost(parseLastFmResponse(response.data), ChartType.Artists);
-    lastFmErrorCount = 0;
+    if (response.data.weeklyartistchart.artist.lenght) {
+      preparePost(parseLastFmResponse(response.data), ChartType.Artists);
+      lastFmErrorCount = 0;
+    } else {
+      console.log('No artists to post... You need to listen to more music. Or at least scrobble it.');
+      return;
+    }
   }).catch(error => {
     console.error('\nError when fetching data from Last.FM:', error);
     lastFmErrorCount++;
@@ -127,7 +137,7 @@ const preparePost = async (lastFmData: Object, chartType: ChartType): Promise<vo
   }
 
   if (!settings.postOnMastodon && !settings.postOnMisskey && !settings.postOnPleroma) {
-    console.error('No social network is enabled to post on!');
+    console.error('No social network is enabled in the config file to post on!');
     process.exit();
   }
 }
@@ -156,7 +166,7 @@ const postToMisskey = async (postContent: string): Promise<void> => {
     origin: misskeyAuthData.base_url,
     credential: misskeyAuthData.access_token,
   });
-  
+
   cli.request('notes/create', { text: postContent, visibility: 'public' }).then((res: any) => {
     console.log('\nPosted to Misskey: ', `${misskeyAuthData.base_url}/notes/${res.createdNote.id}`);
     misskeyErrorCount = 0;
