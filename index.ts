@@ -39,7 +39,7 @@ const getLastFMTrackChart = (): void => {
       preparePost(parseLastFmResponse(response.data), ChartType.Tracks);
       lastFmErrorCount = 0;
     } else {
-      console.log('No tracks to post... You need to listen to more music. Or at least scrobble it.');
+      console.info('\nNo tracks to post... You need to listen to more music. Or at least scrobble it.');
       return;
     }
   }).catch(error => {
@@ -73,7 +73,7 @@ const getLastFMArtistChart = (): void => {
       preparePost(parseLastFmResponse(response.data), ChartType.Artists);
       lastFmErrorCount = 0;
     } else {
-      console.log('No artists to post... You need to listen to more music. Or at least scrobble it.');
+      console.info('\nNo artists to post... You need to listen to more music. Or at least scrobble it.');
       return;
     }
   }).catch(error => {
